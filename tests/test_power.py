@@ -1,4 +1,4 @@
-from src.power import power_function
+from toolkit.power import power_function
 
 
 def test_power_positive_exponent() -> None:
