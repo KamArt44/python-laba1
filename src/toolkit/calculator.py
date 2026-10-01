@@ -30,8 +30,7 @@ def validation_characters(math_expression: str) -> None:
     for char in math_expression:
         if char not in ALLOWED_CHARACTERS:
             raise CalculatorError(f"Недопустимый символ: {char}")
-        if char[0] == ".":
-            raise CalculatorError(F"Неверная запись числа {char}")
+
 
 
 def transformation_math_expression(math_expression: str) -> list:
