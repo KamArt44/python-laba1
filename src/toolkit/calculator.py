@@ -1,107 +1,88 @@
 import re
-import operator
-from toolkit.errors import ToolkitError
-allowed_characters =   set([str(i) for i in range(10)] + ["*", "-", "+", "/", "(", ")", " ", "."])
+
+from toolkit.constants import (
+    ALLOWED_CHARACTERS,
+    DICT_ACTION,
+    DICT_OPERATIONS,
+    TOKEN_PATTERN,
+    UNARY_OPERATIONS,
+)
+from toolkit.errors import CalculatorError
 
 
-dict_action = {
-    "+": operator.add,
-    "-": operator.sub,
-    "/": operator.truediv,
-    "*": operator.mul,
-    "**": operator.pow,
-}
-
-# u- и u+ — это унарный минус и унарный плюс
-dict_operations = {
-    "**": 4,
-    "u-": 3,
-    "u+": 3,
-    "*": 2,
-    "/": 2,
-    "+": 1,
-    "-": 1,
-}
-
-UNARY_OPERATIONS = {"u-", "u+"}
-
-
-def to_number(s: str):
+def to_number(s: str) -> int | float:
+    """числа с точкой"""
     if "." in s:
         return float(s)
     return int(s)
 
 
-def calculate_expression(math_expression : str) -> int|float:
-     validation_characters(math_expression)
-     tokens =  transformation_math_expression(math_expression)
-     validate_tokens(tokens)
-     return expression_stack(tokens)
+def calculate_expression(math_expression: str) -> int | float:
+    """Главная функция"""
+    validation_characters(math_expression)
+    tokens = transformation_math_expression(math_expression)
+    validate_tokens(tokens)
+    return expression_stack(tokens)
 
 
-def validation_characters(math_expression: str)-> None:
+def validation_characters(math_expression: str) -> None:
+    """Проверяет на символы"""
     for char in math_expression:
-        if char not in allowed_characters:
-            raise ToolkitError(f"Недопустимый символ: {char}")
+        if char not in ALLOWED_CHARACTERS:
+            raise CalculatorError(f"Недопустимый символ: {char}")
+        if char[0] == ".":
+            raise CalculatorError(F"Неверная запись числа {char}")
+
 
 def transformation_math_expression(math_expression: str) -> list:
     """
-    Разбирает строку с математическим выражением в список токенов.
-    Поддерживает унарный минус и унарный плюс.
+    Токенизация
     """
-    expr = math_expression.replace(" ", "")
 
-    # Сначала распознаём числа и операторы
-    pattern = r"\d+(?:\.\d+)?|\*\*|[()+\-*/]"
-    raw_tokens = re.findall(pattern, expr)
+    raw_tokens = re.findall(TOKEN_PATTERN, math_expression)
 
     tokens: list[int | float | str] = []
 
     for token in raw_tokens:
         # Определяем, является ли + или - унарным оператором
         if token in {"-", "+"} and (
-            not tokens
-            or tokens[-1] == "("
-            or tokens[-1] in dict_operations
+            not tokens or tokens[-1] == "(" or tokens[-1] in DICT_OPERATIONS
         ):
             if token == "-":
                 tokens.append("u-")
             else:
                 tokens.append("u+")
-
         # Числа
-        elif re.fullmatch(r"\d+(?:\.\d+)?", token):
+        elif token[0].isdigit() or token[0] == ".":
             tokens.append(to_number(token))
-
         # Остальные операторы и скобки
         else:
             tokens.append(token)
 
     return tokens
 
+
 def validate_tokens(tokens: list) -> None:
     """
-    Проверяет корректность последовательности токенов.
-    Если выражение некорректное, возбуждает ValueError.
+    Валидация
     """
     if not tokens:
-        raise ToolkitError("Пустое выражение")
+        raise CalculatorError("Пустое выражение")
 
     expect_operand = True
     parentheses_balance = 0
-
     for token in tokens:
         # Число
         if isinstance(token, (int, float)):
             if not expect_operand:
-                raise ToolkitError("Пропущен оператор")
+                raise CalculatorError("Пропущен оператор")
 
             expect_operand = False
 
         # Открывающая скобка
         elif token == "(":
             if not expect_operand:
-                raise ToolkitError("Пропущен оператор")
+                raise CalculatorError("Пропущен оператор")
 
             parentheses_balance += 1
             expect_operand = True
@@ -109,42 +90,42 @@ def validate_tokens(tokens: list) -> None:
         # Закрывающая скобка
         elif token == ")":
             if expect_operand:
-                raise ToolkitError("Пропущен операнд")
+                raise CalculatorError("Пропущен операнд")
 
             parentheses_balance -= 1
 
             if parentheses_balance < 0:
-                raise ToolkitError("Лишняя закрывающая скобка")
+                raise CalculatorError("Лишняя закрывающая скобка")
 
             expect_operand = False
 
         # Унарный оператор
-        elif token in {"u-", "u+"}:
+        elif token in UNARY_OPERATIONS:
             if not expect_operand:
-                raise ToolkitError("Лишний унарный оператор")
+                raise CalculatorError("Лишний унарный оператор")
 
             expect_operand = True
 
         # Бинарный оператор
         elif token in {"+", "-", "*", "/"}:
             if expect_operand:
-                raise ToolkitError("Пропущен операнд")
+                raise CalculatorError("Пропущен операнд")
 
             expect_operand = True
 
         else:
-            raise ToolkitError(f"Недопустимый токен: {token}")
+            raise CalculatorError(f"Недопустимый токен: {token}")
 
     if expect_operand:
-        raise ToolkitError("Пропущен операнд")
+        raise CalculatorError("Пропущен операнд")
 
     if parentheses_balance != 0:
-        raise ToolkitError("Непарные скобки")
+        raise CalculatorError("Непарные скобки")
 
 
-def apply_top(stack_operands: list, stack_operations: list):
+def apply_top(stack_operands: list, stack_operations: list) -> None:
     """
-    Применяет верхнюю операцию из стека операций к стеку операндов.
+    Применение операций из стека
     """
     operation = stack_operations.pop()
 
@@ -161,16 +142,17 @@ def apply_top(stack_operands: list, stack_operations: list):
     else:
         b = stack_operands.pop()
         a = stack_operands.pop()
-        stack_operands.append(dict_action[operation](a, b))
+        if operation == "/" and b == 0:
+            raise CalculatorError("Деление на ноль")
+        stack_operands.append(DICT_ACTION[operation](a, b))
 
 
-def expression_stack(new_math_expression: list):
+def expression_stack(new_math_expression: list) -> int | float:
     """
     Вычисляет выражение, используя стеки операндов и операций.
     """
     stack_operands = []
     stack_operations = []
-
     for char in new_math_expression:
         # Если это число
         if isinstance(char, (int, float)):
@@ -190,28 +172,25 @@ def expression_stack(new_math_expression: list):
                 stack_operations.pop()
 
         # Если это оператор
-        elif char in dict_operations:
-            # Унарные операторы просто кладём в стек
+        elif char in DICT_OPERATIONS:
+            # Унарные операторы кладём в стек.
             if char in UNARY_OPERATIONS:
                 stack_operations.append(char)
 
-            # Для бинарных операторов учитываем приоритет
+            # Для бинарных операторов учитываем приоритет.
             else:
                 while (
                     stack_operations
                     and stack_operations[-1] != "("
-                    and stack_operations[-1] in dict_operations
-                    and dict_operations[char] <= dict_operations[stack_operations[-1]]
+                    and stack_operations[-1] in DICT_OPERATIONS
+                    and DICT_OPERATIONS[char] <= DICT_OPERATIONS[stack_operations[-1]]
                 ):
                     apply_top(stack_operands, stack_operations)
 
                 stack_operations.append(char)
-
-    # После разбора выражения применяем оставшиеся операции
+    #  применяем оставшиеся операции
     while stack_operations:
         apply_top(stack_operands, stack_operations)
-
-    if stack_operands:
-        return stack_operands[0]
-
-    return None
+    if len(stack_operands) != 1:
+        raise CalculatorError("Некорректное выражение")
+    return stack_operands[0]

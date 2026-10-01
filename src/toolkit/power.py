@@ -1,4 +1,4 @@
-def power_function(target: int, power: int ) -> float:
+def power_function(target: int, power: int) -> float:
     """
     Пример функции, которая выполняет операцию возведения в степень
     :param target:  Число, которое будут возводить в степень

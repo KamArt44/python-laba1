@@ -1,20 +1,40 @@
-from toolkit.power import power_function
-from toolkit.constants import SAMPLE_CONSTANT
+"""Обработка команд, аргументов и вывод в терминал."""
+
+import argparse
+import sys
+
+from toolkit.calculator import calculate_expression
+from toolkit.converter import convert
+from toolkit.errors import CalculatorError, ConverterError
 
 
-def main() -> None:
-    """
-    Обязательнная составляющая программ, которые сдаются. Является точкой входа в приложение
-    :return: Данная функция ничего не возвращает
-    """
+def main(argv: list[str] | None = None) -> int:
+    """Выполняет команду и возвращает код завершения: 0 или 2."""
+    parser = argparse.ArgumentParser(description="Калькулятор и конвертер величин")
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    target, degree = map(int, input("Введите два числа разделенные пробелом: ").split(" "))
+    calc_parser = subparsers.add_parser("calc", help="Вычислить выражение")
+    calc_parser.add_argument("expression")
 
-    result = power_function(target=target, power=degree)
+    convert_parser = subparsers.add_parser("convert", help="Перевести величину")
+    convert_parser.add_argument("value", type=float)
+    convert_parser.add_argument("--from", dest="from_unit", required=True)
+    convert_parser.add_argument("--to", dest="to_unit", required=True)
+
+    args = parser.parse_args(argv)
+
+    try:
+        if args.command == "calc":
+            result = calculate_expression(args.expression)
+        else:
+            result = convert(args.value, args.from_unit, args.to_unit)
+    except (CalculatorError, ConverterError) as error:
+        print(error, file=sys.stderr)
+        return 2
 
     print(result)
+    return 0
 
-    print(SAMPLE_CONSTANT)
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

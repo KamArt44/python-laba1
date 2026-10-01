@@ -1,23 +1,15 @@
-from toolkit.errors import ToolkitError
+import math
 
-
-length_units = {
-    "mm": 0.001,
-    "cm": 0.01,
-    "m": 1.0,
-    "km": 1000.0,
-}
-
-mass_units = {
-    "g": 0.001,
-    "kg": 1.0,
-}
-
-temperature_units = {
-    "c",
-    "f",
-    "k",
-}
+from toolkit.constants import (
+    ABSOLUTE_ZERO,
+    CELSIUS_OFFSET,
+    FAHRENHEIT_OFFSET,
+    FAHRENHEIT_SCALE,
+    LENGTH_UNITS,
+    MASS_UNITS,
+    TEMPERATURE_UNITS,
+)
+from toolkit.errors import ConverterError
 
 
 def _find_group(unit: str) -> str:
@@ -26,33 +18,36 @@ def _find_group(unit: str) -> str:
     """
     unit = unit.lower()
 
-    if unit in length_units:
+    if unit in LENGTH_UNITS:
         return "length"
 
-    if unit in mass_units:
+    if unit in MASS_UNITS:
         return "mass"
 
-    if unit in temperature_units:
+    if unit in TEMPERATURE_UNITS:
         return "temperature"
 
-    raise ToolkitError(f"Неизвестная единица: {unit}")
+    raise ConverterError(f"Неизвестная единица: {unit}")
 
 
 def _temperature_to_kelvin(value: float, unit: str) -> float:
     """
     Переводит температуру в Кельвины.
     """
+    if value < ABSOLUTE_ZERO[unit]:
+        raise ConverterError("Температура ниже абсолютного нуля")
+    # Точное граничное значение не должно пострадать от округления float.
+    if value == ABSOLUTE_ZERO[unit]:
+        return 0.0
+
     if unit == "c":
-        kelvin = value + 273.15
+        kelvin = value + CELSIUS_OFFSET
 
     elif unit == "f":
-        kelvin = (value - 32) * 5 / 9 + 273.15
+        kelvin = (value - FAHRENHEIT_OFFSET) * FAHRENHEIT_SCALE + CELSIUS_OFFSET
 
     else:
         kelvin = value
-
-    if kelvin < 0:
-        raise ToolkitError("Температура ниже абсолютного нуля")
 
     return kelvin
 
@@ -62,10 +57,10 @@ def _kelvin_to_temperature(value: float, unit: str) -> float:
     Переводит температуру из Кельвинов в нужную единицу.
     """
     if unit == "c":
-        return value - 273.15
+        return value - CELSIUS_OFFSET
 
     if unit == "f":
-        return (value - 273.15) * 9 / 5 + 32
+        return (value - CELSIUS_OFFSET) / FAHRENHEIT_SCALE + FAHRENHEIT_OFFSET
 
     return value
 
@@ -74,6 +69,13 @@ def convert(value: float, from_unit: str, to_unit: str) -> float:
     """
     Переводит значение из одной единицы измерения в другую.
     """
+    try:
+        value = float(value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ConverterError("Неверное числовое значение") from error
+    if not math.isfinite(value):
+        raise ConverterError("Неверное числовое значение")
+
     from_unit = from_unit.lower()
     to_unit = to_unit.lower()
 
@@ -81,9 +83,7 @@ def convert(value: float, from_unit: str, to_unit: str) -> float:
     to_group = _find_group(to_unit)
 
     if from_group != to_group:
-        raise ToolkitError(
-            f"Несовместимые единицы: {from_unit} и {to_unit}"
-        )
+        raise ConverterError(f"Несовместимые единицы: {from_unit} и {to_unit}")
 
     # Температура
     if from_group == "temperature":
@@ -92,11 +92,11 @@ def convert(value: float, from_unit: str, to_unit: str) -> float:
 
     # Длина или масса
     if from_group == "length":
-        base_value = value * length_units[from_unit]
-        result = base_value / length_units[to_unit]
+        base_value = value * LENGTH_UNITS[from_unit]
+        result = base_value / LENGTH_UNITS[to_unit]
 
     else:
-        base_value = value * mass_units[from_unit]
-        result = base_value / mass_units[to_unit]
+        base_value = value * MASS_UNITS[from_unit]
+        result = base_value / MASS_UNITS[to_unit]
 
     return float(result)
