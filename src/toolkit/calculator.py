@@ -10,14 +10,14 @@ from toolkit.constants import (
 from toolkit.errors import CalculatorError
 
 
-def to_number(s: str) -> int | float:
-    """числа с точкой"""
-    if "." in s:
+def to_number(s: str) -> float:
+    try:
         return float(s)
-    return int(s)
+    except ValueError:
+        raise CalculatorError("Неверное числовое значение") from None
 
 
-def calculate_expression(math_expression: str) -> int | float:
+def calculate_expression(math_expression: str) -> float:
     """Главная функция"""
     validation_characters(math_expression)
     tokens = transformation_math_expression(math_expression)
@@ -40,7 +40,7 @@ def transformation_math_expression(math_expression: str) -> list:
 
     raw_tokens = re.findall(TOKEN_PATTERN, math_expression)
 
-    tokens: list[int | float | str] = []
+    tokens: list[ float | str] = []
 
     for token in raw_tokens:
         # Определяем, является ли + или - унарным оператором
@@ -72,7 +72,7 @@ def validate_tokens(tokens: list) -> None:
     parentheses_balance = 0
     for token in tokens:
         # Число
-        if isinstance(token, (int, float)):
+        if isinstance(token, float):
             if not expect_operand:
                 raise CalculatorError("Пропущен оператор")
 
@@ -146,7 +146,7 @@ def apply_top(stack_operands: list, stack_operations: list) -> None:
         stack_operands.append(DICT_ACTION[operation](a, b))
 
 
-def expression_stack(new_math_expression: list) -> int | float:
+def expression_stack(new_math_expression: list) ->  float:
     """
     Вычисляет выражение, используя стеки операндов и операций.
     """
@@ -154,7 +154,7 @@ def expression_stack(new_math_expression: list) -> int | float:
     stack_operations = []
     for char in new_math_expression:
         # Если это число
-        if isinstance(char, (int, float)):
+        if isinstance(char,  float):
             stack_operands.append(char)
 
         # Открывающая скобка

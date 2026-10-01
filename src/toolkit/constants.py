@@ -3,18 +3,16 @@
 import operator
 
 ALLOWED_CHARACTERS = set("0123456789+-*/(). \t\n\r\v\f")
-NUMBER_PATTERN = r"(?:\d+(?:\.\d*)?|\.\d+)"
-TOKEN_PATTERN = r"\d[\d.]*|\.[\d.]*|\*\*|[()+\-*/]|\S"
+#NUMBER_PATTERN = r"(?:\d+(?:\.\d*)?|\.\d+)"
+TOKEN_PATTERN = r"\d[\d.]*|\.[\d.]*|[()+\-*/]|\S"
 
 DICT_ACTION = {
     "+": operator.add,
     "-": operator.sub,
     "/": operator.truediv,
-    "*": operator.mul,
-    "**": operator.pow,
+    "*": operator.mul
 }
 DICT_OPERATIONS = {
-    "**": 4,
     "u-": 3,
     "u+": 3,
     "*": 2,
