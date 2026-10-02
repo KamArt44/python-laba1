@@ -74,7 +74,6 @@ def test_temperature_below_absolute_zero_kelvin() -> None:
 
 @pytest.mark.parametrize(("value", "unit"), [(-273.15, "c"), (-459.67, "f"), (0, "k")])
 def test_absolute_zero(value: float, unit: str) -> None:
-    """Сам абсолютный ноль допустим во всех трёх шкалах."""
     result = convert(value, unit, "k")
     assert result == 0.0
     assert isinstance(result, float)
@@ -82,12 +81,10 @@ def test_absolute_zero(value: float, unit: str) -> None:
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
 def test_non_finite_value(value: float) -> None:
-    """Не допускает специальные значения вместо обычного числа."""
-    with pytest.raises(ConverterError, match="Неверное числовое значение"):
+    # не допускает лишние знач
+    with pytest.raises(ConverterError, match="Неправильное значение"):
         convert(value, "m", "cm")
-
-
 def test_temperature_below_absolute_zero_fahrenheit() -> None:
-    """Проверяет нижнюю границу шкалы Фаренгейта."""
+    #Проверяет границу по Фаренгейту
     with pytest.raises(ConverterError):
         convert(-460, "f", "k")
