@@ -1,4 +1,4 @@
-"""Запуск пакета командой python -m toolkit."""
+"""Запуск пакета """
 
 from toolkit.main import main
 

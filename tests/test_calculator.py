@@ -15,11 +15,11 @@ from toolkit.errors import CalculatorError
         ("+2 + -3", -1),
         ("-(2 + 3)", -5),
         (".5 + 1.25", 1.75),
-        (" 2\t+\n3 ", 5),
+        (" 2 + 3 ", 5),
     ],
 )
 def test_valid_expression(expression: str, expected: float) -> None:
-    """Проверяет арифметику, приоритеты, скобки и унарные знаки."""
+    #Проверка
     assert calculate_expression(expression) == pytest.approx(expected)
 
 

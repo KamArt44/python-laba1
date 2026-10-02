@@ -1,6 +1,8 @@
 class CalculatorError(Exception):
-    """Ошибка в выражении калькулятора"""
+    #Ошибка в выражении калькулятора
+    pass
 
 
 class ConverterError(Exception):
-    """Ошибка в конвертере"""
+    #Ошибка в конверторе
+    pass

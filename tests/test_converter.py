@@ -44,7 +44,7 @@ def test_same_unit() -> None:
     assert convert(25, "cm", "cm") == 25.0
 
 
-# ---------- Негативные тесты ----------
+#  Неправильные тесты
 
 
 def test_unknown_source_unit() -> None:

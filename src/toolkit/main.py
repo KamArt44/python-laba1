@@ -1,15 +1,11 @@
-"""Обработка команд, аргументов и вывод в терминал."""
-
 import argparse
 import sys
 
 from toolkit.calculator import calculate_expression
 from toolkit.converter import convert
 from toolkit.errors import CalculatorError, ConverterError
-
-
 def main(argv: list[str] | None = None) -> int:
-    """Выполняет команду и возвращает код завершения: 0 или 2."""
+    #возвращает код завершения 0 или 2
     parser = argparse.ArgumentParser(description="Калькулятор и конвертер величин")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
